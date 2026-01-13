@@ -1,0 +1,1 @@
+"""Domain models (pure Python). No FastAPI, no ORM."""
