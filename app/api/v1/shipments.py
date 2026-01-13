@@ -1,0 +1,8 @@
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/shipments", tags=["shipments"])
+
+
+@router.get("/")
+def list_shipments():
+    return []
