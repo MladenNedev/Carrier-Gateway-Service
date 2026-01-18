@@ -3,10 +3,10 @@ from app.core.config import settings
 from app.api.v1 import merchants, health
 
 
-app = FastAPI(title=settings.app_name)
+app = FastAPI(title="Carrier Gateway Service")
 
 from app.api.v1.merchants import router as merchants_router
-app.include_router(merchants_router, prefix="/api/v1")
-
 from app.api.v1.health import router as health_router
+
+app.include_router(merchants_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")

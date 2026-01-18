@@ -1,13 +1,13 @@
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
-    app_name: str
-    env: str
+    app_name: str = "Carrier Gateway Service"
+    env: str = "test"
     database_url: str
 
-    class Config:
-        env_file = ".env"
-
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+    }
 
 settings = Settings()
