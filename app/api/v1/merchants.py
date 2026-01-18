@@ -31,7 +31,7 @@ def list_merchants(
     service = MerchantService(MerchantRepository(db))
     return service.list_merchants()
 
-@router.get("/{merchant_id", response_model=MerchantResponse)
+@router.get("/{merchant_id}", response_model=MerchantResponse)
 def get_merchant(
         merchant_id: UUID,
         db: Session = Depends(get_db),
