@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from .models import MerchantModel
+from uuid import UUID
 
 class MerchantRepository:
     def __init__(self, db: Session):
@@ -13,3 +14,14 @@ class MerchantRepository:
         self.db.commit()
         self.db.refresh(merchant)
         return merchant
+
+    def get_by_id(self, merchant_id: UUID):
+        return (
+            self.db
+            .query(MerchantModel)
+            .filter(MerchantModel.id == merchant_id)
+            .first()
+        )
+
+    def list(self):
+        return self.db.query(MerchantModel).all()
