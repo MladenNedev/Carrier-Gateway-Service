@@ -1,4 +1,3 @@
-from app.domain.merchant import Merchant
 from app.persistance.repositories import MerchantRepository
 from app.persistance.models import MerchantModel
 from app.domain.merchant import Merchant
