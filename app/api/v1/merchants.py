@@ -22,3 +22,21 @@ def create_merchant(
         raise HTTPException(status_code=400, detail=str(e))
 
     return merchant
+
+@router.get("", response_model=List[MerchantResponse])
+def list_merchants(
+        db: Session = Depends(get_db)
+):
+    service = MerchantService(MerchantRepository(db))
+    return service.list_merchants()
+
+@router.get("/{merchant_id", response_model=MerchantResponse)
+def get_merchant(
+        merchant_id: UUID,
+        db: Session = Depends(get_db),
+):
+    service = MerchantService(MerchantRepository(db))
+    try:
+        return service.get_merchant(merchant_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
