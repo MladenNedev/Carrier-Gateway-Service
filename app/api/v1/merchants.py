@@ -5,6 +5,7 @@ from app.schemas.merchant import MerchantCreate, MerchantResponse
 from app.persistance.session import get_db
 from app.persistance.repositories import MerchantRepository
 from app.services.merchant_service import MerchantService
+from uuid import UUID
 
 router = APIRouter(prefix="/merchant", tags=["merchant"])
 
@@ -23,7 +24,7 @@ def create_merchant(
 
     return merchant
 
-@router.get("", response_model=List[MerchantResponse])
+@router.get("", response_model=list[MerchantResponse])
 def list_merchants(
         db: Session = Depends(get_db)
 ):
