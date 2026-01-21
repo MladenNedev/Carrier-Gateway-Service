@@ -1,6 +1,8 @@
-from app.persistance.repositories import MerchantRepository
-from app.persistance.models import MerchantModel
+from app.domain.errors import DuplicatedError, NotFoundError
 from app.domain.merchant import Merchant
+from app.persistence.models import MerchantModel
+from app.persistence.repositories import MerchantRepository
+
 from uuid import UUID
 
 class MerchantService:
@@ -8,23 +10,16 @@ class MerchantService:
         self.repo = repo
 
     def create_merchant(self, name: str) -> Merchant:
-        existing = self.repo.get_by_name(name=name)
-        if existing:
-            raise ValueError(f"Merchant with name {name} already exists")
+        if self.repo.get_by_name(name=name):
+            raise DuplicatedError(f"Merchant {name} already exists")
 
-        model = MerchantModel(name=name)
-        saved = self.repo.save(model)
-
-        return Merchant(
-            id=saved.id,
-            name=saved.name
-        )
+        saved = self.repo.save(MerchantModel(name=name))
+        return Merchant(id=saved.id, name=saved.name)
 
     def get_merchant(self, merchant_id: UUID) -> Merchant:
         model = self.repo.get_by_id(merchant_id)
         if not model:
-            raise ValueError(f"Merchant with id {merchant_id} does not exist")
-
+            raise NotFoundError(f"Merchant {merchant_id} not found")
         return Merchant(id=model.id, name=model.name)
 
     def list_merchants(self) -> list[Merchant]:
