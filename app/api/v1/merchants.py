@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.domain.errors import NotFoundError, DuplicatedError
 from app.schemas.merchant import MerchantCreate, MerchantResponse
-from app.persistance.session import get_db
-from app.persistance.repositories import MerchantRepository
+from app.persistence.session import get_db
+from app.persistence.repositories import MerchantRepository
 from app.services.merchant_service import MerchantService
 from uuid import UUID
 
@@ -19,8 +20,8 @@ def create_merchant(
 
     try:
         merchant = service.create_merchant(payload.name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except DuplicatedError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
     return merchant
 
@@ -39,5 +40,5 @@ def get_merchant(
     service = MerchantService(MerchantRepository(db))
     try:
         return service.get_merchant(merchant_id)
-    except ValueError as e:
+    except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e

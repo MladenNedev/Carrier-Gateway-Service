@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.persistance.session import get_db
+from app.persistence.session import get_db
 
 router = APIRouter(prefix="/health", tags=["health"])
 
