@@ -8,7 +8,7 @@ from alembic import context
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
-from app.persistance.models import Base
+from app.persistence.models import Base
 
 target_metadata = Base.metadata
 
