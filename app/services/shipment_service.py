@@ -3,6 +3,7 @@ from app.domain.shipment import Shipment, ShipmentStatus
 from app.persistence.models import ShipmentModel
 from app.persistence.repositories import MerchantRepository, ShipmentRepository
 from app.schemas.shipments import ShipmentCreate
+from app.services.results import ShipmentCreateResponse
 
 from uuid import UUID
 
@@ -12,7 +13,7 @@ class ShipmentService:
         self.shipment_repo = shipment_repo
         self.merchant_repo = merchant_repo
 
-    def create_shipment(self, data: ShipmentCreate):
+    def create_shipment(self, data: ShipmentCreate) -> ShipmentCreateResponse:
         merchant = self.merchant_repo.get_by_id(data.merchant_id)
         if not merchant:
             raise NotFoundError(f"Merchant {data.merchant_id} not found")
@@ -23,13 +24,14 @@ class ShipmentService:
                 data.external_reference
             )
             if existing:
-                return Shipment(
+                shipment = Shipment(
                     id=existing.id,
                     merchant_id=existing.merchant_id,
                     name=existing.name,
                     external_reference=existing.external_reference,
-                    status=ShipmentStatus(existing.status)
+                    status=ShipmentStatus(existing.status),
                 )
+                return ShipmentCreateResponse(shipment=shipment, created=False)
 
         model = ShipmentModel(
             merchant_id=data.merchant_id,
@@ -39,13 +41,14 @@ class ShipmentService:
         )
         saved = self.shipment_repo.create(model)
 
-        return Shipment(
+        shipment = Shipment(
             id=saved.id,
             merchant_id=saved.merchant_id,
             name=saved.name,
             external_reference=saved.external_reference,
-            status=ShipmentStatus(saved.status)
+            status=ShipmentStatus(saved.status),
         )
+        return ShipmentCreateResponse(shipment=shipment, created=True)
 
     def get_shipment(self, shipment_id: UUID) -> Shipment:
 
