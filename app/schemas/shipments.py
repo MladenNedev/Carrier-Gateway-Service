@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 class ShipmentCreate(BaseModel):
@@ -7,11 +7,10 @@ class ShipmentCreate(BaseModel):
     external_reference: str | None
 
 class ShipmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     merchant_id: UUID
     name: str
     status: str
     external_reference: str | None
-
-    class Config:
-        from_attributes = True
