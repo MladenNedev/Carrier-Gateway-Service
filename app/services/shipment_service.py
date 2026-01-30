@@ -18,20 +18,19 @@ class ShipmentService:
         if not merchant:
             raise NotFoundError(f"Merchant {data.merchant_id} not found")
 
-        if data.external_reference:
-            existing = self.shipment_repo.get_by_merchant_id_and_external_reference(
-                data.merchant_id,
-                data.external_reference
+        existing = self.shipment_repo.get_by_merchant_id_and_external_reference(
+            data.merchant_id,
+            data.external_reference,
+        )
+        if existing:
+            shipment = Shipment(
+                id=existing.id,
+                merchant_id=existing.merchant_id,
+                name=existing.name,
+                external_reference=existing.external_reference,
+                status=ShipmentStatus(existing.status),
             )
-            if existing:
-                shipment = Shipment(
-                    id=existing.id,
-                    merchant_id=existing.merchant_id,
-                    name=existing.name,
-                    external_reference=existing.external_reference,
-                    status=ShipmentStatus(existing.status),
-                )
-                return ShipmentCreateResponse(shipment=shipment, created=False)
+            return ShipmentCreateResponse(shipment=shipment, created=False)
 
         model = ShipmentModel(
             merchant_id=data.merchant_id,
