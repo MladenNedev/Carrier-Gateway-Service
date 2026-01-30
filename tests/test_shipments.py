@@ -45,6 +45,16 @@ def test_create_shipment_missing_merchant_returns_404(client):
     assert response.status_code == 404
 
 
+def test_create_shipment_missing_external_reference_returns_422(client):
+    merchant_id = _create_merchant(client)
+    payload = {
+        "merchant_id": merchant_id,
+        "name": "Order Missing Ref",
+    }
+    response = client.post("/api/v1/shipments", json=payload)
+    assert response.status_code == 422
+
+
 def test_list_shipments_returns_created(client):
     merchant_id = _create_merchant(client)
     shipment = _create_shipment(client, merchant_id, "order-555")
