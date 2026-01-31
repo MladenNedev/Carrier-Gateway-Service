@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
-from .models import MerchantModel, ShipmentEventModel, ShipmentModel
-from ..domain.shipment import ShipmentStatus
 from uuid import UUID
+
+from sqlalchemy.orm import Session
+
+from ..domain.shipment import ShipmentStatus
+from .models import MerchantModel, ShipmentEventModel, ShipmentModel
+
 
 class ShipmentRepository:
     def __init__(self, db: Session):
         self.db = db
 
     def get_by_id(self, shipment_id: UUID) -> ShipmentModel | None:
-        return (
-            self.db
-            .query(ShipmentModel)
-            .filter(ShipmentModel.id == shipment_id)
-            .first()
-        )
+        return self.db.query(ShipmentModel).filter(ShipmentModel.id == shipment_id).first()
 
-    def get_by_merchant_id_and_external_reference(self, merchant_id: UUID, external_reference: str) -> ShipmentModel | None:
+    def get_by_merchant_id_and_external_reference(
+        self, merchant_id: UUID, external_reference: str
+    ) -> ShipmentModel | None:
         return (
-            self.db
-            .query(ShipmentModel)
+            self.db.query(ShipmentModel)
             .filter(
                 ShipmentModel.merchant_id == merchant_id,
                 ShipmentModel.external_reference == external_reference,
@@ -29,13 +28,15 @@ class ShipmentRepository:
         )
 
     def list(self) -> list[ShipmentModel]:
-        return (
-            self.db
-            .query(ShipmentModel)
-            .all()
-        )
+        return self.db.query(ShipmentModel).all()
 
-    def list_filtered(self, merchant_id: UUID | None = None, status: ShipmentStatus | None = None, limit: int = 50, offset: int = 0,) -> list[ShipmentModel]:
+    def list_filtered(
+        self,
+        merchant_id: UUID | None = None,
+        status: ShipmentStatus | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[ShipmentModel]:
         query = self.db.query(ShipmentModel)
 
         if merchant_id is not None:
@@ -44,13 +45,7 @@ class ShipmentRepository:
         if status is not None:
             query = query.filter(ShipmentModel.status == status)
 
-        return (
-            query
-            .order_by(ShipmentModel.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-            .all()
-        )
+        return query.order_by(ShipmentModel.created_at.desc()).limit(limit).offset(offset).all()
 
     def create(self, shipment: ShipmentModel) -> ShipmentModel:
         self.db.add(shipment)
@@ -71,8 +66,7 @@ class ShipmentEventRepository:
 
     def list_by_shipment_id(self, shipment_id: UUID) -> list[ShipmentEventModel]:
         return (
-            self.db
-            .query(ShipmentEventModel)
+            self.db.query(ShipmentEventModel)
             .filter(ShipmentEventModel.shipment_id == shipment_id)
             .order_by(ShipmentEventModel.occurred_at)
             .all()
@@ -80,10 +74,9 @@ class ShipmentEventRepository:
 
     def get_by_id(self, shipment_event_id: UUID) -> ShipmentEventModel | None:
         return (
-            self.db
-            .query(ShipmentEventModel)
+            self.db.query(ShipmentEventModel)
             .filter(ShipmentEventModel.id == shipment_event_id)
-            .first() 
+            .first()
         )
 
     def create(self, shipment_event: ShipmentEventModel) -> ShipmentEventModel:
@@ -107,12 +100,7 @@ class MerchantRepository:
         return merchant
 
     def get_by_id(self, merchant_id: UUID):
-        return (
-            self.db
-            .query(MerchantModel)
-            .filter(MerchantModel.id == merchant_id)
-            .first()
-        )
+        return self.db.query(MerchantModel).filter(MerchantModel.id == merchant_id).first()
 
     def list(self):
         return self.db.query(MerchantModel).all()

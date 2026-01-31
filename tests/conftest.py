@@ -2,11 +2,12 @@ import os
 import sys
 
 import pytest
-from alembic import command
-from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from alembic import command
+from alembic.config import Config
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if base_dir not in sys.path:
@@ -18,8 +19,8 @@ if not TEST_DATABASE_URL:
 
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
-from app.main import app
-from app.persistence.session import get_db
+from app.main import app  # noqa: E402
+from app.persistence.session import get_db  # noqa: E402
 
 engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
 TestingSessionLocal = sessionmaker(

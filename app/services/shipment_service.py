@@ -1,13 +1,17 @@
+from uuid import UUID
+
 from app.domain.errors import NotFoundError
 from app.domain.shipment import Shipment, ShipmentStatus, can_transition
 from app.domain.shipment_event import ShipmentTrackingEvent
 from app.persistence.models import ShipmentEventModel, ShipmentModel
-from app.persistence.repositories import MerchantRepository, ShipmentEventRepository, ShipmentRepository
+from app.persistence.repositories import (
+    MerchantRepository,
+    ShipmentEventRepository,
+    ShipmentRepository,
+)
 from app.schemas.shipment_events import ShipmentEventCreate
 from app.schemas.shipments import ShipmentCreate
 from app.services.results import ShipmentCreateResponse
-
-from uuid import UUID
 
 
 class ShipmentService:
@@ -62,9 +66,21 @@ class ShipmentService:
         model = self.shipment_repo.get_by_id(shipment_id)
         if not model:
             raise NotFoundError(f"Shipment {shipment_id} not found")
-        return Shipment(id=model.id, merchant_id=model.merchant_id, name=model.name, external_reference=model.external_reference, status=ShipmentStatus(model.status))
+        return Shipment(
+            id=model.id,
+            merchant_id=model.merchant_id,
+            name=model.name,
+            external_reference=model.external_reference,
+            status=ShipmentStatus(model.status),
+        )
 
-    def list_shipments(self, merchant_id: UUID | None = None, status: ShipmentStatus | None = None, limit: int = 50, offset: int = 0,) -> list[Shipment]:
+    def list_shipments(
+        self,
+        merchant_id: UUID | None = None,
+        status: ShipmentStatus | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Shipment]:
         models = self.shipment_repo.list_filtered(
             merchant_id=merchant_id,
             status=status,

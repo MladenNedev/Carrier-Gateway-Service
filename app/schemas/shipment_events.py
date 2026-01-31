@@ -1,7 +1,7 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
-from uuid import UUID
 
 from app.domain.shipment_event import ShipmentEventSource, ShipmentEventType
 

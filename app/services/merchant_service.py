@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from app.domain.errors import DuplicatedError, NotFoundError
 from app.domain.merchant import Merchant
 from app.persistence.models import MerchantModel
 from app.persistence.repositories import MerchantRepository
 
-from uuid import UUID
 
 class MerchantService:
     def __init__(self, repo: MerchantRepository):
@@ -23,7 +24,4 @@ class MerchantService:
         return Merchant(id=model.id, name=model.name)
 
     def list_merchants(self) -> list[Merchant]:
-        return [
-            Merchant(id=m.id, name=m.name)
-            for m in self.repo.list()
-        ]
+        return [Merchant(id=m.id, name=m.name) for m in self.repo.list()]
