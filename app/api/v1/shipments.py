@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from uuid import UUID
@@ -11,6 +11,7 @@ from app.persistence.session import get_db
 from app.persistence.repositories import MerchantRepository, ShipmentEventRepository, ShipmentRepository
 from app.services.shipment_service import ShipmentService
 from app.services.results import ShipmentCreateResponse
+from app.api.v1.errors import error_response
 
 router = APIRouter(prefix="/shipments", tags=["shipments"])
 
@@ -29,7 +30,7 @@ def create_shipment(
         response_body = ShipmentResponse.model_validate(result.shipment).model_dump(mode="json")
         return JSONResponse(status_code=status_code, content=response_body)
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        return error_response(404, "not_found", str(e))
 
 @router.get("", response_model=list[ShipmentResponse])
 def list_shipments(
@@ -62,7 +63,7 @@ def get_shipment(
     try:
         return service.get_shipment(shipment_id)
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        return error_response(404, "not_found", str(e))
 
 
 @router.post("/{shipment_id}/status", response_model=ShipmentResponse)
@@ -78,9 +79,9 @@ def update_shipment_status(
     try:
         return service.update_status(shipment_id, payload.status)
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        return error_response(404, "not_found", str(e))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        return error_response(400, "invalid_transition", str(e))
 
 
 @router.post("/{shipment_id}/events", response_model=ShipmentEventResponse)
@@ -97,7 +98,7 @@ def add_shipment_event(
     try:
         return service.add_event(shipment_id, payload)
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        return error_response(404, "not_found", str(e))
 
 
 @router.get("/{shipment_id}/events", response_model=list[ShipmentEventResponse])
@@ -113,4 +114,4 @@ def list_shipment_events(
     try:
         return service.list_events(shipment_id)
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        return error_response(404, "not_found", str(e))
