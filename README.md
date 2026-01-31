@@ -48,6 +48,24 @@ docker compose run --rm -e DATABASE_TEST_URL=postgresql+psycopg://postgres:postg
 
 `external_reference` is required.
 
+## Error responses
+
+Errors use a consistent payload shape:
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "Shipment <id> not found"
+  }
+}
+```
+
+Common codes:
+- `not_found`
+- `duplicate`
+- `invalid_transition`
+
 ## Example requests
 
 Create a merchant:
