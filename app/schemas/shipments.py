@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
+from app.domain.shipment import ShipmentStatus
 
 class ShipmentCreate(BaseModel):
     merchant_id: UUID
@@ -14,3 +15,6 @@ class ShipmentResponse(BaseModel):
     name: str
     status: str
     external_reference: str
+
+class ShipmentStatusUpdate(BaseModel):
+    status: ShipmentStatus

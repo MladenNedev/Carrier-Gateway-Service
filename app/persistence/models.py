@@ -3,7 +3,7 @@ from sqlalchemy import String, DateTime, ForeignKey, Enum as SAEnum, UniqueConst
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.domain.shipment import ShipmentStatus
-from app.domain.tracking_event import ShipmentEventType, ShipmentEventSource
+from app.domain.shipment_event import ShipmentEventType, ShipmentEventSource
 import uuid
 import datetime
 
@@ -81,4 +81,3 @@ class ShipmentEventModel(Base):
     occurred_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
