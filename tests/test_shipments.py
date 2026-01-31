@@ -62,6 +62,8 @@ def test_create_shipment_missing_merchant_returns_404(client):
     }
     response = client.post("/api/v1/shipments", json=payload)
     assert response.status_code == 404
+    body = response.json()
+    assert body["error"]["code"] == "not_found"
 
 
 def test_create_shipment_missing_external_reference_returns_422(client):
@@ -115,6 +117,8 @@ def test_update_shipment_status_forbidden_transition(client):
 
     response = _update_status(client, shipment["id"], "delivered")
     assert response.status_code == 400
+    body = response.json()
+    assert body["error"]["code"] == "invalid_transition"
 
 
 def test_update_shipment_status_idempotent(client):
