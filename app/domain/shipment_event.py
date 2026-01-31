@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from uuid import UUID
+from datetime import datetime
 from enum import Enum
-
-from app.domain.shipment import Shipment
+from uuid import UUID
 
 class ShipmentEventType(str, Enum):
     LABEL_CREATED = "label_created"
@@ -21,5 +20,7 @@ class ShipmentEventSource(str, Enum):
 class ShipmentTrackingEvent:
     id: UUID
     shipment_id: UUID
-    event_type: ShipmentEventType
-    event_source: ShipmentEventSource
+    type: ShipmentEventType
+    source: ShipmentEventSource
+    reason: str | None
+    occurred_at: datetime
