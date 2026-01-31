@@ -16,3 +16,16 @@ class Shipment:
     name: str
     external_reference: str | None
     status: ShipmentStatus
+
+ALLOWED_TRANSITIONS = {
+    ShipmentStatus.CREATED: {ShipmentStatus.IN_TRANSIT, ShipmentStatus.CANCELLED},
+    ShipmentStatus.IN_TRANSIT: {ShipmentStatus.DELIVERED, ShipmentStatus.FAILED, ShipmentStatus.CANCELLED},
+    ShipmentStatus.DELIVERED: set(),
+    ShipmentStatus.FAILED: set(),
+    ShipmentStatus.CANCELLED: set(),
+}
+
+def can_transition(current: ShipmentStatus, target: ShipmentStatus) -> bool:
+    if current == target:
+        return True
+    return target in ALLOWED_TRANSITIONS.get(current, set())

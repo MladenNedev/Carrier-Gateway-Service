@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from sqlalchemy.orm import Session
 from .models import MerchantModel, ShipmentEventModel, ShipmentModel
+from ..domain.shipment import ShipmentStatus
 from uuid import UUID
 
 class ShipmentRepository:
@@ -32,15 +35,48 @@ class ShipmentRepository:
             .all()
         )
 
+    def list_filtered(self, merchant_id: UUID | None = None, status: ShipmentStatus | None = None, limit: int = 50, offset: int = 0,) -> list[ShipmentModel]:
+        query = self.db.query(ShipmentModel)
+
+        if merchant_id is not None:
+            query = query.filter(ShipmentModel.merchant_id == merchant_id)
+
+        if status is not None:
+            query = query.filter(ShipmentModel.status == status)
+
+        return (
+            query
+            .order_by(ShipmentModel.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
     def create(self, shipment: ShipmentModel) -> ShipmentModel:
         self.db.add(shipment)
         self.db.commit()
         self.db.refresh(shipment)
         return shipment
 
+    def update_status(self, shipment: ShipmentModel) -> ShipmentModel:
+        self.db.add(shipment)
+        self.db.commit()
+        self.db.refresh(shipment)
+        return shipment
+
+
 class ShipmentEventRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    def list_by_shipment_id(self, shipment_id: UUID) -> list[ShipmentEventModel]:
+        return (
+            self.db
+            .query(ShipmentEventModel)
+            .filter(ShipmentEventModel.shipment_id == shipment_id)
+            .order_by(ShipmentEventModel.occurred_at)
+            .all()
+        )
 
     def get_by_id(self, shipment_event_id: UUID) -> ShipmentEventModel | None:
         return (
