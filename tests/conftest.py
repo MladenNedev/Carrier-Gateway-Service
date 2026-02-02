@@ -23,11 +23,7 @@ from app.main import app  # noqa: E402
 from app.persistence.session import get_db  # noqa: E402
 
 engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
-TestingSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -41,11 +37,15 @@ def apply_migrations():
 
 @pytest.fixture()
 def db_session():
-    db = TestingSessionLocal()
+    connection = engine.connect()
+    transaction = connection.begin()
+    db = TestingSessionLocal(bind=connection)
     try:
         yield db
     finally:
         db.close()
+        transaction.rollback()
+        connection.close()
 
 
 @pytest.fixture()
