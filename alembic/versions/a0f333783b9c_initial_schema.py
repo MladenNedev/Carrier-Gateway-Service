@@ -158,4 +158,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_table("users")
     op.drop_table("merchants")
+    op.execute("DROP TYPE IF EXISTS shipment_event_source")
+    op.execute("DROP TYPE IF EXISTS shipment_event_type")
+    op.execute("DROP TYPE IF EXISTS shipment_status")
     # ### end Alembic commands ###
