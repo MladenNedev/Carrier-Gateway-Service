@@ -190,6 +190,7 @@ def test_ingest_external_event_updates_status_and_creates_event(client):
 
     payload = {
         "carrier": "mock",
+        "merchant_id": merchant_id,
         "external_reference": "order-999",
         "event_code": "IN_TRANSIT",
         "event_time": datetime.now(timezone.utc).isoformat(),
@@ -208,9 +209,37 @@ def test_ingest_external_event_rejects_invalid_code(client):
 
     payload = {
         "carrier": "mock",
+        "merchant_id": merchant_id,
         "external_reference": "order-998",
         "event_code": "UNKNOWN_CODE",
         "event_time": datetime.now(timezone.utc).isoformat(),
     }
     response = client.post("/api/v1/shipments/events/external", json=payload)
     assert response.status_code == 400
+
+
+def test_ingest_external_event_scopes_to_merchant(client):
+    merchant_a = _create_merchant(client)
+    merchant_b = _create_merchant(client)
+    shipment_a = _create_shipment(client, merchant_a, "order-997")
+    shipment_b = _create_shipment(client, merchant_b, "order-997")
+
+    payload = {
+        "carrier": "mock",
+        "merchant_id": merchant_b,
+        "external_reference": "order-997",
+        "event_code": "IN_TRANSIT",
+        "event_time": datetime.now(timezone.utc).isoformat(),
+    }
+    response = client.post("/api/v1/shipments/events/external", json=payload)
+    assert response.status_code == 200
+    assert response.json()["shipment"]["id"] == shipment_b["id"]
+
+    shipment_a_resp = client.get(f"/api/v1/shipments/{shipment_a['id']}")
+    assert shipment_a_resp.status_code == 200
+    assert shipment_a_resp.json()["status"] == "created"
+
+
+def test_list_shipments_rejects_negative_limit(client):
+    response = client.get("/api/v1/shipments?limit=-1")
+    assert response.status_code == 422

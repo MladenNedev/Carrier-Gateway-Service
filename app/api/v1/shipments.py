@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.adapters.registry import get_adapter
@@ -72,8 +72,8 @@ async def ingest_external_event(
 def list_shipments(
     merchant_id: UUID | None = None,
     status: ShipmentStatus | None = None,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ):
     service = ShipmentService(

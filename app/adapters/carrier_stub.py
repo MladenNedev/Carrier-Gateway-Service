@@ -26,6 +26,7 @@ class MockCarrierAdapter(CarrierAdapter):
             raise ValueError(f"Unsupported event code: {payload.event_code}")
 
         return AdapterResult(
+            merchant_id=payload.merchant_id,
             shipment_external_reference=payload.external_reference,
             event_type=event_type,
             occurred_at=payload.event_time,

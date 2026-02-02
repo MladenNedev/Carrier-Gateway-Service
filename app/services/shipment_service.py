@@ -193,11 +193,14 @@ class ShipmentService:
         if not self.event_repo:
             raise RuntimeError("Shipment event repository is not configured")
 
-        shipment = self.shipment_repo.get_by_external_reference(
-            adapter_result.shipment_external_reference
+        shipment = self.shipment_repo.get_by_merchant_id_and_external_reference(
+            adapter_result.merchant_id,
+            adapter_result.shipment_external_reference,
         )
         if not shipment:
-            raise NotFoundError(f"Shipment {adapter_result.shipment_external_reference} not found")
+            raise NotFoundError(
+                f"Shipment {adapter_result.shipment_external_reference} not found for merchant {adapter_result.merchant_id}"
+            )
 
         event = ShipmentEventModel(
             shipment_id=shipment.id,

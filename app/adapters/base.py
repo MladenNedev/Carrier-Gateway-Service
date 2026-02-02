@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
+from uuid import UUID
 
 from app.domain.shipment import ShipmentStatus
 from app.domain.shipment_event import ShipmentEventType
@@ -10,6 +11,7 @@ from app.domain.shipment_event import ShipmentEventType
 
 @dataclass(frozen=True)
 class AdapterResult:
+    merchant_id: UUID
     shipment_external_reference: str
     event_type: ShipmentEventType
     occurred_at: datetime
