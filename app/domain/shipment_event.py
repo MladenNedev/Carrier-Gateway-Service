@@ -9,7 +9,7 @@ class ShipmentEventType(str, Enum):
     PICKED_UP = "picked_up"
     OUT_FOR_DELIVERY = "out_for_delivery"
     DELIVERED = "delivered"
-    DELIVERY_FAILED = "DELIVERY_FAILED"
+    DELIVERY_FAILED = "delivery_failed"
 
 
 class ShipmentEventSource(str, Enum):
