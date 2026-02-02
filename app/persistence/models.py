@@ -19,7 +19,7 @@ class MerchantModel(Base):
     __tablename__ = "merchants"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -87,12 +87,18 @@ class ShipmentModel(Base):
         lazy="selectin",
     )
     status: Mapped[ShipmentStatus] = mapped_column(
-        SAEnum(ShipmentStatus, name="shipment_status"), nullable=False
+        SAEnum(
+            ShipmentStatus,
+            name="shipment_status",
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
+        nullable=False,
     )
 
 
 class ShipmentEventModel(Base):
     __tablename__ = "shipment_events"
+    __table_args__ = (Index("ix_shipment_events_shipment_id", "shipment_id"),)
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     shipment_id: Mapped[UUID] = mapped_column(
@@ -101,7 +107,12 @@ class ShipmentEventModel(Base):
     shipment: Mapped[ShipmentModel] = relationship("ShipmentModel", back_populates="events")
 
     type: Mapped[ShipmentEventType] = mapped_column(
-        SAEnum(ShipmentEventType, name="shipment_event_type"), nullable=False
+        SAEnum(
+            ShipmentEventType,
+            name="shipment_event_type",
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
+        nullable=False,
     )
     source: Mapped[ShipmentEventSource] = mapped_column(
         SAEnum(ShipmentEventSource, name="shipment_event_source"), nullable=False

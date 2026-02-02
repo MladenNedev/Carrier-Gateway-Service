@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
 from app.domain.errors import DuplicatedError, NotFoundError
 from app.domain.merchant import Merchant
 from app.persistence.models import MerchantModel
@@ -14,7 +16,13 @@ class MerchantService:
         if self.repo.get_by_name(name=name):
             raise DuplicatedError(f"Merchant {name} already exists")
 
-        saved = self.repo.save(MerchantModel(name=name))
+        try:
+            saved = self.repo.save(MerchantModel(name=name))
+        except IntegrityError as exc:
+            self.repo.db.rollback()
+            if self.repo.get_by_name(name=name):
+                raise DuplicatedError(f"Merchant {name} already exists") from exc
+            raise
         return Merchant(id=saved.id, name=saved.name)
 
     def get_merchant(self, merchant_id: UUID) -> Merchant:

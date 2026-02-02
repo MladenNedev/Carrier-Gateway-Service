@@ -1,8 +1,11 @@
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
+from app.adapters.base import AdapterResult
 from app.domain.errors import NotFoundError
 from app.domain.shipment import Shipment, ShipmentStatus, can_transition
-from app.domain.shipment_event import ShipmentTrackingEvent
+from app.domain.shipment_event import ShipmentEventSource, ShipmentTrackingEvent
 from app.persistence.models import ShipmentEventModel, ShipmentModel
 from app.persistence.repositories import (
     MerchantRepository,
@@ -50,7 +53,24 @@ class ShipmentService:
             external_reference=data.external_reference,
             status=ShipmentStatus.CREATED,
         )
-        saved = self.shipment_repo.create(model)
+        try:
+            saved = self.shipment_repo.create(model)
+        except IntegrityError as exc:
+            self.shipment_repo.db.rollback()
+            existing = self.shipment_repo.get_by_merchant_id_and_external_reference(
+                data.merchant_id,
+                data.external_reference,
+            )
+            if existing:
+                shipment = Shipment(
+                    id=existing.id,
+                    merchant_id=existing.merchant_id,
+                    name=existing.name,
+                    external_reference=existing.external_reference,
+                    status=ShipmentStatus(existing.status),
+                )
+                return ShipmentCreateResponse(shipment=shipment, created=False)
+            raise exc
 
         shipment = Shipment(
             id=saved.id,
@@ -165,3 +185,61 @@ class ShipmentService:
             )
             for e in events
         ]
+
+    def process_external_event(
+        self,
+        adapter_result: AdapterResult,
+    ) -> tuple[Shipment, ShipmentTrackingEvent]:
+        if not self.event_repo:
+            raise RuntimeError("Shipment event repository is not configured")
+
+        shipment = self.shipment_repo.get_by_merchant_id_and_external_reference(
+            adapter_result.merchant_id,
+            adapter_result.shipment_external_reference,
+        )
+        if not shipment:
+            raise NotFoundError(
+                f"Shipment {adapter_result.shipment_external_reference} not found for merchant {adapter_result.merchant_id}"
+            )
+
+        if adapter_result.shipment_status is not None:
+            current_status = ShipmentStatus(shipment.status)
+            if not can_transition(current_status, adapter_result.shipment_status):
+                raise ValueError(
+                    f"Invalid transition from {current_status} to {adapter_result.shipment_status}"
+                )
+            shipment.status = adapter_result.shipment_status
+
+        event = ShipmentEventModel(
+            shipment_id=shipment.id,
+            type=adapter_result.event_type,
+            source=ShipmentEventSource.CARRIER,
+            reason=adapter_result.reason,
+            occurred_at=adapter_result.occurred_at,
+        )
+        session = self.shipment_repo.db
+        tx_context = session.begin_nested() if session.in_transaction() else session.begin()
+        with tx_context:
+            if adapter_result.shipment_status is not None:
+                session.add(shipment)
+            session.add(event)
+            session.flush()
+            session.refresh(shipment)
+            session.refresh(event)
+
+        updated_shipment = Shipment(
+            id=shipment.id,
+            merchant_id=shipment.merchant_id,
+            name=shipment.name,
+            external_reference=shipment.external_reference,
+            status=ShipmentStatus(shipment.status),
+        )
+        tracking_event = ShipmentTrackingEvent(
+            id=event.id,
+            shipment_id=event.shipment_id,
+            type=event.type,
+            source=event.source,
+            reason=event.reason,
+            occurred_at=event.occurred_at,
+        )
+        return updated_shipment, tracking_event

@@ -47,6 +47,16 @@ class ShipmentRepository:
 
         return query.order_by(ShipmentModel.created_at.desc()).limit(limit).offset(offset).all()
 
+    def get_by_external_reference(self, external_reference: str) -> ShipmentModel | None:
+        matches = (
+            self.db.query(ShipmentModel)
+            .filter(ShipmentModel.external_reference == external_reference)
+            .all()
+        )
+        if len(matches) != 1:
+            return None
+        return matches[0]
+
     def create(self, shipment: ShipmentModel) -> ShipmentModel:
         self.db.add(shipment)
         self.db.commit()

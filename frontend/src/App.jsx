@@ -22,7 +22,7 @@ const EVENT_TYPES = [
   "picked_up",
   "out_for_delivery",
   "delivered",
-  "DELIVERY_FAILED",
+  "delivery_failed",
 ];
 
 export default function App() {
