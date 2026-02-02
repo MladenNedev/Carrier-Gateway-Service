@@ -202,15 +202,6 @@ class ShipmentService:
                 f"Shipment {adapter_result.shipment_external_reference} not found for merchant {adapter_result.merchant_id}"
             )
 
-        event = ShipmentEventModel(
-            shipment_id=shipment.id,
-            type=adapter_result.event_type,
-            source=ShipmentEventSource.SYSTEM,
-            reason=adapter_result.reason,
-            occurred_at=adapter_result.occurred_at,
-        )
-        saved_event = self.event_repo.create(event)
-
         if adapter_result.shipment_status is not None:
             current_status = ShipmentStatus(shipment.status)
             if not can_transition(current_status, adapter_result.shipment_status):
@@ -219,6 +210,15 @@ class ShipmentService:
                 )
             shipment.status = adapter_result.shipment_status
             shipment = self.shipment_repo.update_status(shipment)
+
+        event = ShipmentEventModel(
+            shipment_id=shipment.id,
+            type=adapter_result.event_type,
+            source=ShipmentEventSource.SYSTEM,
+            reason=adapter_result.reason,
+            occurred_at=adapter_result.occurred_at,
+        )
+        saved_event = self.event_repo.create(event)
 
         updated_shipment = Shipment(
             id=shipment.id,

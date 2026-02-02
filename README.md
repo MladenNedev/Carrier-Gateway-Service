@@ -84,8 +84,8 @@ Start backend + frontend:
 
 docker compose up --build
 
-Frontend: http://localhost:5173  
-API: http://localhost:8000/docs
+Frontend: `http://localhost:5173`  
+API: `http://localhost:8000/docs`
 
 Run tests:
 

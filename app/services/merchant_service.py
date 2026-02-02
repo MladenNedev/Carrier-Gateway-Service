@@ -20,7 +20,9 @@ class MerchantService:
             saved = self.repo.save(MerchantModel(name=name))
         except IntegrityError as exc:
             self.repo.db.rollback()
-            raise DuplicatedError(f"Merchant {name} already exists") from exc
+            if self.repo.get_by_name(name=name):
+                raise DuplicatedError(f"Merchant {name} already exists") from exc
+            raise
         return Merchant(id=saved.id, name=saved.name)
 
     def get_merchant(self, merchant_id: UUID) -> Merchant:
