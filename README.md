@@ -1,97 +1,35 @@
 # Carrier Gateway Service
 
-Production-grade FastAPI service for merchant-managed shipments with idempotent creation, status transitions, and event ingestion.
+## What problem this service solves
 
-## Architecture
+This service prevents the most common shipment data failures in real systems:
+- Duplicate shipment creation from retries or replayed requests
+- Inconsistent status updates from out-of-order signals
+- Retried carrier events that must not corrupt history
+- Lack of auditability for shipment state changes
 
-Layers:
-- API: `app/api/v1/*`
-- Service: `app/services/*`
-- Domain: `app/domain/*`
-- Persistence: `app/persistence/*`
-- Schemas: `app/schemas/*`
+## Who uses this
 
-Request flow:
-API route -> service -> repository -> database; domain models are returned and serialized by schemas.
+- Internal platform service used by merchant systems and marketplaces
+- Not end-user facing
 
-## Run locally (Docker)
+This frontend represents an internal operations dashboard for merchant shipment systems.
 
-```bash
-docker compose up --build
-```
+## Core guarantees
 
-## Migrations
+- Idempotent shipment creation by `(merchant_id, external_reference)`
+- Strict status transitions (state machine enforced)
+- Immutable event history (append-only)
 
-Initialize/update schema:
-```bash
-docker compose run --rm -e DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/shipping_db api alembic upgrade head
-```
+## High-level architecture
 
-## Tests
+API -> Service -> Domain -> Persistence
 
-Create test DB once:
-```bash
-docker compose exec db psql -U postgres -c "CREATE DATABASE shipping_db_test;"
-```
+This structure exists to keep business rules explicit, testable, and correct under retries and concurrency.
 
-Run tests:
-```bash
-docker compose build api
-docker compose run --rm -e DATABASE_TEST_URL=postgresql+psycopg://postgres:postgres@db:5432/shipping_db_test api pytest
-```
+## Example real-world flow
 
-## Idempotency contract
-
-`POST /api/v1/shipments` is idempotent by `(merchant_id, external_reference)`.
-- If a shipment already exists for the pair, the API returns `200` and the existing shipment.
-- If it does not exist, the API returns `201` and creates a new shipment.
-
-`external_reference` is required.
-
-## Error responses
-
-Errors use a consistent payload shape:
-
-```json
-{
-  "error": {
-    "code": "not_found",
-    "message": "Shipment <id> not found"
-  }
-}
-```
-
-Common codes:
-- `not_found`
-- `duplicate`
-- `invalid_transition`
-
-## Example requests
-
-Create a merchant:
-```bash
-curl -X POST http://localhost:8000/api/v1/merchant \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Acme"}'
-```
-
-Create a shipment:
-```bash
-curl -X POST http://localhost:8000/api/v1/shipments \
-  -H "Content-Type: application/json" \
-  -d '{"merchant_id":"<uuid>","name":"Order 123","external_reference":"order-123"}'
-```
-
-Update shipment status:
-```bash
-curl -X POST http://localhost:8000/api/v1/shipments/<id>/status \
-  -H "Content-Type: application/json" \
-  -d '{"status":"in_transit"}'
-```
-
-Add shipment event:
-```bash
-curl -X POST http://localhost:8000/api/v1/shipments/<id>/events \
-  -H "Content-Type: application/json" \
-  -d '{"type":"picked_up","source":"carrier","occurred_at":"2024-01-01T12:00:00Z"}'
-```
+1) A merchant submits a shipment request.
+2) A duplicate request arrives due to retry.
+3) The service returns the existing shipment ID.
+4) A carrier event arrives and updates shipment status while preserving history.
