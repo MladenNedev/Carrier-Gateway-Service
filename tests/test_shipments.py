@@ -182,3 +182,35 @@ def test_list_shipments_filters_and_paginates(client):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
+
+
+def test_ingest_external_event_updates_status_and_creates_event(client):
+    merchant_id = _create_merchant(client)
+    shipment = _create_shipment(client, merchant_id, "order-999")
+
+    payload = {
+        "carrier": "mock",
+        "external_reference": "order-999",
+        "event_code": "IN_TRANSIT",
+        "event_time": datetime.now(timezone.utc).isoformat(),
+    }
+    response = client.post("/api/v1/shipments/events/external", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["shipment"]["id"] == shipment["id"]
+    assert body["shipment"]["status"] == "in_transit"
+    assert body["event"]["type"] == "out_for_delivery"
+
+
+def test_ingest_external_event_rejects_invalid_code(client):
+    merchant_id = _create_merchant(client)
+    _ = _create_shipment(client, merchant_id, "order-998")
+
+    payload = {
+        "carrier": "mock",
+        "external_reference": "order-998",
+        "event_code": "UNKNOWN_CODE",
+        "event_time": datetime.now(timezone.utc).isoformat(),
+    }
+    response = client.post("/api/v1/shipments/events/external", json=payload)
+    assert response.status_code == 400

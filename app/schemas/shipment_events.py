@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 from app.domain.shipment_event import ShipmentEventSource, ShipmentEventType
+from app.schemas.shipments import ShipmentResponse
 
 
 class ShipmentEventCreate(BaseModel):
@@ -22,3 +25,8 @@ class ShipmentEventResponse(BaseModel):
     source: ShipmentEventSource
     reason: str | None
     occurred_at: datetime
+
+
+class ExternalEventIngestResponse(BaseModel):
+    shipment: ShipmentResponse
+    event: ShipmentEventResponse

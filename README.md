@@ -33,3 +33,10 @@ This structure exists to keep business rules explicit, testable, and correct und
 2) A duplicate request arrives due to retry.
 3) The service returns the existing shipment ID.
 4) A carrier event arrives and updates shipment status while preserving history.
+
+## External Integrations (Adapters)
+
+Adapters model how external carrier/webhook payloads are translated into internal events.
+- Adapters translate external formats into internal domain events.
+- Business rules live in services and domain, not inside adapters.
+- Current adapter implementation is a stub to show extensibility.
