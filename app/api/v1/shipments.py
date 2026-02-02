@@ -1,9 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
+from app.adapters.registry import get_adapter
+from app.adapters.schemas import ExternalCarrierEvent
 from app.api.v1.errors import error_response
 from app.domain.errors import NotFoundError
 from app.domain.shipment import ShipmentStatus
@@ -13,7 +14,11 @@ from app.persistence.repositories import (
     ShipmentRepository,
 )
 from app.persistence.session import get_db
-from app.schemas.shipment_events import ShipmentEventCreate, ShipmentEventResponse
+from app.schemas.shipment_events import (
+    ExternalEventIngestResponse,
+    ShipmentEventCreate,
+    ShipmentEventResponse,
+)
 from app.schemas.shipments import ShipmentCreate, ShipmentResponse, ShipmentStatusUpdate
 from app.services.results import ShipmentCreateResponse
 from app.services.shipment_service import ShipmentService
@@ -24,6 +29,7 @@ router = APIRouter(prefix="/shipments", tags=["shipments"])
 @router.post("", response_model=ShipmentResponse)
 def create_shipment(
     payload: ShipmentCreate,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     service = ShipmentService(
@@ -32,9 +38,32 @@ def create_shipment(
     )
     try:
         result: ShipmentCreateResponse = service.create_shipment(payload)
-        status_code = 201 if result.created else 200
-        response_body = ShipmentResponse.model_validate(result.shipment).model_dump(mode="json")
-        return JSONResponse(status_code=status_code, content=response_body)
+        response.status_code = 201 if result.created else 200
+        return ShipmentResponse.model_validate(result.shipment)
+    except NotFoundError as e:
+        return error_response(404, "not_found", str(e))
+
+
+@router.post("/events/external", response_model=ExternalEventIngestResponse)
+async def ingest_external_event(
+    payload: ExternalCarrierEvent,
+    db: Session = Depends(get_db),
+):
+    service = ShipmentService(
+        ShipmentRepository(db),
+        MerchantRepository(db),
+        ShipmentEventRepository(db),
+    )
+    try:
+        adapter = get_adapter(payload.carrier)
+        adapter_result = await adapter.ingest_event(payload)
+        shipment, event = service.process_external_event(adapter_result)
+        return ExternalEventIngestResponse(
+            shipment=ShipmentResponse.model_validate(shipment),
+            event=ShipmentEventResponse.model_validate(event),
+        )
+    except ValueError as e:
+        return error_response(400, "invalid_external_event", str(e))
     except NotFoundError as e:
         return error_response(404, "not_found", str(e))
 
