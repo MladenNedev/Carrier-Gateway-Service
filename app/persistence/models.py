@@ -102,7 +102,12 @@ class ShipmentEventModel(Base):
     shipment: Mapped[ShipmentModel] = relationship("ShipmentModel", back_populates="events")
 
     type: Mapped[ShipmentEventType] = mapped_column(
-        SAEnum(ShipmentEventType, name="shipment_event_type"), nullable=False
+        SAEnum(
+            ShipmentEventType,
+            name="shipment_event_type",
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
+        nullable=False,
     )
     source: Mapped[ShipmentEventSource] = mapped_column(
         SAEnum(ShipmentEventSource, name="shipment_event_source"), nullable=False
