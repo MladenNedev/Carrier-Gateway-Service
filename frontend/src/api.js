@@ -21,15 +21,15 @@ async function request(path, options = {}) {
     };
   }
 
-  const text = await response.text();
   let body = null;
   let parseError = null;
-  if (text) {
-    try {
+  try {
+    const text = await response.text();
+    if (text) {
       body = JSON.parse(text);
-    } catch (error) {
-      parseError = error instanceof Error ? error.message : "Response parse error";
     }
+  } catch (error) {
+    parseError = error instanceof Error ? error.message : "Response parse error";
   }
   return { ok: response.ok, status: response.status, body, parseError };
 }

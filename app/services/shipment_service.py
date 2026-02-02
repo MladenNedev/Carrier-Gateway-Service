@@ -209,16 +209,23 @@ class ShipmentService:
                     f"Invalid transition from {current_status} to {adapter_result.shipment_status}"
                 )
             shipment.status = adapter_result.shipment_status
-            shipment = self.shipment_repo.update_status(shipment)
 
         event = ShipmentEventModel(
             shipment_id=shipment.id,
             type=adapter_result.event_type,
-            source=ShipmentEventSource.SYSTEM,
+            source=ShipmentEventSource.CARRIER,
             reason=adapter_result.reason,
             occurred_at=adapter_result.occurred_at,
         )
-        saved_event = self.event_repo.create(event)
+        session = self.shipment_repo.db
+        tx_context = session.begin_nested() if session.in_transaction() else session.begin()
+        with tx_context:
+            if adapter_result.shipment_status is not None:
+                session.add(shipment)
+            session.add(event)
+            session.flush()
+            session.refresh(shipment)
+            session.refresh(event)
 
         updated_shipment = Shipment(
             id=shipment.id,
@@ -228,11 +235,11 @@ class ShipmentService:
             status=ShipmentStatus(shipment.status),
         )
         tracking_event = ShipmentTrackingEvent(
-            id=saved_event.id,
-            shipment_id=saved_event.shipment_id,
-            type=saved_event.type,
-            source=saved_event.source,
-            reason=saved_event.reason,
-            occurred_at=saved_event.occurred_at,
+            id=event.id,
+            shipment_id=event.shipment_id,
+            type=event.type,
+            source=event.source,
+            reason=event.reason,
+            occurred_at=event.occurred_at,
         )
         return updated_shipment, tracking_event

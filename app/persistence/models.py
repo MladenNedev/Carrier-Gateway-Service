@@ -87,7 +87,12 @@ class ShipmentModel(Base):
         lazy="selectin",
     )
     status: Mapped[ShipmentStatus] = mapped_column(
-        SAEnum(ShipmentStatus, name="shipment_status"), nullable=False
+        SAEnum(
+            ShipmentStatus,
+            name="shipment_status",
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
+        nullable=False,
     )
 
 
