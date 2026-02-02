@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.persistence.session import get_db
@@ -13,5 +14,5 @@ def health():
 
 @router.get("/db")
 def health_db(db: Session = Depends(get_db)):
-    db.execute("SELECT 1")
+    db.execute(text("SELECT 1"))
     return {"database": "ok"}
