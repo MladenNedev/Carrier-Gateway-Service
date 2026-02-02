@@ -93,6 +93,7 @@ class ShipmentModel(Base):
 
 class ShipmentEventModel(Base):
     __tablename__ = "shipment_events"
+    __table_args__ = (Index("ix_shipment_events_shipment_id", "shipment_id"),)
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     shipment_id: Mapped[UUID] = mapped_column(

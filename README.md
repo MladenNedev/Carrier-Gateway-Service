@@ -114,3 +114,7 @@ integration boundaries.
 
 This project is implemented to reflect production-style backend design, prioritizing
 correctness, clarity, and testability over feature breadth.
+
+## Performance note
+
+Shipment event timelines are indexed by `shipment_id` to keep event lookups fast at scale.
