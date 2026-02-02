@@ -1,16 +1,35 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api/v1";
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      body: null,
+      networkError: error instanceof Error ? error.message : "Network error",
+    };
+  }
+
   const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
-  return { ok: response.ok, status: response.status, body };
+  let body = null;
+  let parseError = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch (error) {
+      parseError = error instanceof Error ? error.message : "Response parse error";
+    }
+  }
+  return { ok: response.ok, status: response.status, body, parseError };
 }
 
 export const api = {
