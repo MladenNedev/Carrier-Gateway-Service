@@ -1,8 +1,11 @@
-from pydantic import BaseModel
 from uuid import UUID
+
+from pydantic import BaseModel
+
 
 class MerchantCreate(BaseModel):
     name: str
+
 
 class MerchantResponse(BaseModel):
     id: UUID
