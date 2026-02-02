@@ -31,7 +31,7 @@ async function request(path, options = {}) {
   } catch (error) {
     parseError = error instanceof Error ? error.message : "Response parse error";
   }
-  return { ok: response.ok, status: response.status, body, parseError };
+  return { ok: response.ok, status: response.status, body, parseError, networkError: null };
 }
 
 export const api = {
